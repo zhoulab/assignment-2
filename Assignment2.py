@@ -68,7 +68,7 @@ if __name__ == "__main__":
     p = obo_parser.GODag(OBO_FILE)
 
     os.chdir('..')
-    os.chdir('GO_folders')
+    os.chdir('DmGOs')
     folders = next(os.walk('.'))[1]
 
     cell_death_rows = []
