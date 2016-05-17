@@ -33,7 +33,7 @@ Assignment2
 
 ## Setting up directories on HPC
 
-Make sure you have properly configured your HPC account's Git settings AND added your HPC SSH key to your GitHub account. ([wiki](https://github.com/zhoulab/assignment-2/wiki/Setting-up-Git-on-HPC))
+Make sure you have properly configured your HPC account's Git settings AND added your HPC SSH key to your GitHub account. ([wiki](https://github.com/zhoulab/assignment-2/wiki/Using-GitHub-with-HPC))
 
 1. Log in to HPC:
 
