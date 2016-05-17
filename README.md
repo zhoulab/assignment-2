@@ -67,6 +67,8 @@ Make sure you have properly configured your HPC account's Git settings AND added
 
 ## Building
 
+Make sure you are in the `assignment2` directory.
+
 Run `Assignment.py` with `python` and `virtualenv`:
 
 ```
