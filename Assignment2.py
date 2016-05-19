@@ -87,7 +87,7 @@ if __name__ == "__main__":
 
     os.chdir('..')
     os.chdir('DmGOs')
-    folders = next(os.walk('.'))[1][1:3]
+    folders = next(os.walk('.'))[1]
 
     start = time.clock()
 
