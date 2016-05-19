@@ -2,6 +2,7 @@ import re
 import os
 import logging
 import time
+import csv
 
 from bs4 import BeautifulSoup
 from goatools import obo_parser
@@ -13,7 +14,10 @@ RE_CELL_DEATH = [re.compile('death', re.I), re.compile('apopto', re.I),
 # We are filtering out GO "levels" higher than this value (inclusive)
 LEVEL = 3
 
+ALPHA = 1e-3
+
 OBO_FILE = 'go-basic.obo'
+OUTPUT_FILE = "go_results.txt"
 
 
 def get_rows(soup):
@@ -53,6 +57,20 @@ def print_row(row):
                                            row['# of Target Genes in Term'])
 
 
+def get_ancestors(go_obj):
+    """
+        Returns
+        -------
+        {ancestor1, ancestor2, ancestor3, ...} : set
+    """
+
+    if not go_obj.parents:
+        return set()
+
+    return set(go_obj.parents) | set.union(*[get_ancestors(parent)
+                                             for parent in go_obj.parents])
+
+
 if __name__ == "__main__":
     """
         Goes through each folder in the 'GO_folders' directory
@@ -68,45 +86,45 @@ if __name__ == "__main__":
     p = obo_parser.GODag(OBO_FILE)
 
     os.chdir('..')
-    os.chdir('GO_folders')
-    folders = next(os.walk('.'))[1]
-
-    cell_death_rows = []
-    significant_rows = []
+    os.chdir('DmGOs')
+    folders = next(os.walk('.'))[1][1:3]
 
     start = time.clock()
 
+    rows = []
     for i, folder in enumerate(folders):
         log.info('Searching in folder %i of %i: %s',
                  i + 1, len(folders), folder)
         os.chdir(folder)
-        with open('geneOntology.html') as f:
-            soup = BeautifulSoup(f, "html.parser")
-            # count cell death rows in each file for log info
-            count = 0
+        with open('geneOntology.html') as go_file:
+            soup = BeautifulSoup(go_file, "html.parser")
             for row in get_rows(soup):
-                # filter based on level. some GO IDs are not actually GO IDs
+                # filter using level, pvalue. some GO IDs are not valid
                 # (ex. 'fly-chr-') so we will ignore those
-                if 'GO:' in row['GO ID'] and p[row['GO ID']].level > LEVEL:
+                if ('GO:' in row['GO ID'] and p[row['GO ID']].level > LEVEL and
+                        row['P-value'] > ALPHA):
+                    GOTerm_obj = p[row['GO ID']]
                     row['Filename'] = folder
-                    if any(rgx.match(row['Term']) for rgx in RE_CELL_DEATH):
-                        cell_death_rows.append(row)
-                        count += 1
-                    if row['P-value'] < 1e-15:
-                        significant_rows.append(row)
-            log.info('Found %i cell death related terms in %s', count, folder)
+                    row['Level'] = GOTerm_obj.level
+                    row['Depth'] = GOTerm_obj.depth
+                    row['Ancestors'] = [a.name for a in get_ancestors(GOTerm_obj) if a.level > LEVEL]
+                    rows.append(row)
+            log.info('Found %i significant terms in %s', len(rows), folder)
         os.chdir('..')
 
-    cell_death_rows = sorted(cell_death_rows,
-                             key=lambda k: float(k['P-value']))
-    print 'Found %i terms relating to cell death:' % len(cell_death_rows)
-    print_header()
-    for row in cell_death_rows:
-        print_row(row)
-    print ''
-    print 'Found %i terms with p-value < 1e-15:' % len(significant_rows)
-    for row in significant_rows:
-        print_row(row)
+    rows = sorted(rows, key=lambda k: float(k['P-value']))
+    print 'Found %i terms with p-value > %f:' % (len(rows), ALPHA)
+
+    os.chdir('..')
+    with open(OUTPUT_FILE, "w") as out_file:
+        print 'Writing file...'
+        filewriter = csv.writer(out_file, delimiter='\t')
+        header = ['Filename', 'Term', 'Level', 'Depth', 'P-value',
+                  '# of Genes in Term', '# of Target Genes in Term',
+                  '# of Total Genes', '# of Target Genes', 'Ancestors']
+        filewriter.writerow(header)
+        for row in rows:
+            filewriter.writerow([row[head] for head in header])
 
     end = time.clock()
     print 'Run time was %4.2fs' % (end - start)
