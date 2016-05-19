@@ -62,7 +62,7 @@ Make sure you have properly configured your HPC account's Git settings AND added
 5. Exit the SSH session (`CTRL+D`) and copy an existing DmGOs folder from your local machine into the `DmGOs` directory.
 
     ```
-    scp -r /path/to/DmGOs/ <YOUR_HPC_USERNAME>@hipergator.rc.ufl.edu:Assignment2/DmGOs/
+    scp -r /path/to/local/DmGOs <YOUR_HPC_USERNAME>@hipergator.rc.ufl.edu:/path/to/desired/DmGOs
     ```
 
 ## Building
