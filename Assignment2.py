@@ -11,13 +11,11 @@ from goatools import obo_parser
 # Regular expresions for terms relating to cell death
 RE_CELL_DEATH = [re.compile('death', re.I), re.compile('apopto', re.I),
                  re.compile('caspase', re.I)]
-# We are filtering out GO terms with level higher than this value (inclusive)
-LEVEL = 3
+# We are filtering GO terms by level
+LEVEL = 4
 ALPHA = 1e-3
 TOP_RESULTS_CAP = 10
-HEADER = ['GO ID', 'Term', 'Level', 'Depth', 'P-value',
-          '# of Genes in Term', '# of Target Genes in Term',
-          '# of Total Genes', '# of Target Genes', 'Common Genes']
+HEADER = ['GO ID', 'Term', 'Level', 'Depth', 'P-value', 'Level 4 Traceback']
 
 OBO_FILE = 'go-basic.obo'
 OUTPUT_DIRECTORY = os.path.join(os.path.dirname(os.getcwd()), 'results')
@@ -82,17 +80,15 @@ def generate_parent_levels(rows):
             Highest level difference between an ancestor and its term.
             Used by get_updated_header()
     """
-    max_diff = -1
     for row in rows:
-        max_diff_in_row = max([diff for (__, diff) in row['Ancestors']])
-        if max_diff_in_row > max_diff:
-            max_diff = max_diff_in_row
-        for i in range(1, (max_diff_in_row + 1)):
-            log.debug('creating column for "Parent %i" in %s', i, row['Term'])
-            row['Parents (diff: ' + str(i) + ")"] = []
-        for ancestor, diff in row['Ancestors']:
-            row['Parents (diff: ' + str(diff) + ")"].append(ancestor.name)
-    return max_diff
+        row['Level 4 Traceback'] = []
+        if row['Level'] == 4:
+            row['Level 4 Traceback'].append(row['Term'])
+        if row['Ancestors']:
+            max_diff_in_row = max([diff for (__, diff) in row['Ancestors']])
+            for ancestor, diff in row['Ancestors']:
+                if diff == max_diff_in_row:
+                    row['Level 4 Traceback'].append(ancestor.name)
 
 
 def get_updated_header(header, max_diff):
@@ -101,7 +97,7 @@ def get_updated_header(header, max_diff):
                      for i in range(1, max_diff + 1)]
 
 
-def get_significant_rows(soup, p, alpha, term_level_cutoff, parent_level_cutoff):
+def get_significant_rows(soup, p, alpha, level_cutoff):
     """
         Yield significant rows based on alpha, with additional keys attached.
 
@@ -121,13 +117,13 @@ def get_significant_rows(soup, p, alpha, term_level_cutoff, parent_level_cutoff)
         # filter using level, pvalue. some GO IDs are not valid
         # (ex. 'fly-chr-') so we will ignore those
         if ('GO:' in row['GO ID'] and
-                p[row['GO ID']].level > term_level_cutoff and
+                p[row['GO ID']].level >= level_cutoff and
                 row['P-value'] > alpha):
             term_obj = p[row['GO ID']]
             row['Level'] = term_obj.level
             row['Depth'] = term_obj.depth
             row['Ancestors'] = [(a, d) for (a, d) in get_ancestors(term_obj)
-                                if a.level > parent_level_cutoff]
+                                if a.level >= level_cutoff]
             yield row
 
 
@@ -160,29 +156,21 @@ def assignment2():
         log.info('Searching in folder %i of %i: %s', i + 1, len(folders), folder)
         with open(os.path.join(DMGOS_PATH, folder, 'geneOntology.html')) as go_file:
             soup = BeautifulSoup(go_file, "html.parser")
-            rows = get_significant_rows(soup, p, ALPHA,
-                                        term_level_cutoff=3,
-                                        parent_level_cutoff=2)
+            rows = get_significant_rows(soup, p, ALPHA, level_cutoff=LEVEL)
         rows = sorted(list(rows), key=lambda k: float(k['P-value']))[:TOP_RESULTS_CAP]
-        max_diff = generate_parent_levels(rows)
-        new_header = get_updated_header(HEADER, max_diff)
-        # make sure each row has all keys, regardless if needed.
-        for row in rows:
-            for key in new_header:
-                if key not in row:
-                    row[key] = None
+        generate_parent_levels(rows)
 
         with open(os.path.join(OUTPUT_DIRECTORY, folder + '-results.txt'), 'w') as out_file:
             filewriter = csv.writer(out_file, delimiter='\t')
             log.info('Writing output file for %s (top %i significant terms)',
                      folder, TOP_RESULTS_CAP)
-            filewriter.writerow(new_header)
+            filewriter.writerow(HEADER)
             for row in rows:
                 # make parent lists pretty
-                for col in new_header:
-                    if 'Parents' in col and row[col]:
+                for col in HEADER:
+                    if col == 'Level 4 Traceback':
                         row[col] = ', '.join(row[col])
-                filewriter.writerow([row[col] for col in new_header])
+                filewriter.writerow([row[col] for col in HEADER])
 
     end = time.clock()
     log.info('Run time was %4.2fs', end - start)
