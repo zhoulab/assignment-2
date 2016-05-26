@@ -15,11 +15,13 @@ RE_CELL_DEATH = [re.compile('death', re.I), re.compile('apopto', re.I),
 LEVEL = 4
 ALPHA = 1e-3
 TOP_RESULTS_CAP = 10
-HEADER = ['GO ID', 'Term', 'Level', 'Depth', 'P-value', 'Level 4 Traceback']
+HEADER = ['Term', 'P-value', 'Level_4_Traceback']
 
 OBO_FILE = 'go-basic.obo'
-OUTPUT_DIRECTORY = os.path.join(os.path.dirname(os.getcwd()), 'results')
+OUTPUT_DIRECTORY = os.path.join(os.path.dirname(os.getcwd()), 'results (condensed)')
 DMGOS_PATH = os.path.join(os.path.dirname(os.getcwd()), 'DmGOs')
+
+SUMMARY_FILE = os.path.join(OUTPUT_DIRECTORY, 'results_summary.txt')
 
 
 def get_rows(soup):
@@ -81,14 +83,14 @@ def generate_parent_levels(rows):
             Used by get_updated_header()
     """
     for row in rows:
-        row['Level 4 Traceback'] = []
+        row['Level_4_Traceback'] = []
         if row['Level'] == 4:
-            row['Level 4 Traceback'].append(row['Term'])
+            row['Level_4_Traceback'].append(row['Term'])
         if row['Ancestors']:
             max_diff_in_row = max([diff for (__, diff) in row['Ancestors']])
             for ancestor, diff in row['Ancestors']:
                 if diff == max_diff_in_row:
-                    row['Level 4 Traceback'].append(ancestor.name)
+                    row['Level_4_Traceback'].append(ancestor.name)
 
 
 def get_updated_header(header, max_diff):
@@ -152,6 +154,9 @@ def assignment2():
     start = time.clock()
 
     folders = next(os.walk(DMGOS_PATH))[1]
+
+    summary_rows = [[] for i in range(TOP_RESULTS_CAP)]
+
     for i, folder in enumerate(folders):
         log.info('Searching in folder %i of %i: %s', i + 1, len(folders), folder)
         with open(os.path.join(DMGOS_PATH, folder, 'geneOntology.html')) as go_file:
@@ -165,12 +170,24 @@ def assignment2():
             log.info('Writing output file for %s (top %i significant terms)',
                      folder, TOP_RESULTS_CAP)
             filewriter.writerow(HEADER)
-            for row in rows:
+            for i, row in enumerate(rows):
                 # make parent lists pretty
                 for col in HEADER:
-                    if col == 'Level 4 Traceback':
+                    if col == 'Level_4_Traceback':
                         row[col] = ', '.join(row[col])
                 filewriter.writerow([row[col] for col in HEADER])
+                summary_rows[i] += [row[col] for col in HEADER]
+
+    log.info("Writing summary file")
+    summary_header = []
+    for folder in folders:
+        summary_header += [folder + "_" + val for val in HEADER]
+
+    with open(SUMMARY_FILE, 'w') as f:
+        filewriter = csv.writer(f, delimiter='\t')
+        filewriter.writerow(summary_header)
+        for row in summary_rows:
+            filewriter.writerow(row)
 
     end = time.clock()
     log.info('Run time was %4.2fs', end - start)
