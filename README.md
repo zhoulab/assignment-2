@@ -45,20 +45,34 @@ BASE_DIR
 │
 │
 ├───data
-│   ├───go-basic.obo
-│   └───DmGOs
-│       ├───Kc167_P53_NT60_A_GO
-│       │   │   geneOntology.html
+│   │   go-basic.obo
+│   │
+│   └───GOs
+│       ├───DmGOs
+│       │   ├───Kc167_P53_NT60_A_GO
+│       │   │   │   geneOntology.html
+│       │   │   │   ...
+│       │   │
+│       │   ├───Kc167_P53_NT60_B_GO
 │       │   │   ...
 │       │
-│       ├───Kc167_P53_NT60_B_GO
-│       │   ...
+│       └───MammalGOs
+│           ├───Akdemir_p53_DOX_GO
+│           │   │   geneOntology.html
+│           │   │   ...
+│           │
+│           ├───Akdemir_p53_RA_GO
+│           │   ...
 │
 │
 └───results
     └───P53-ChIPSeq-GO-results
-        ├───Kc167_P53_NT60_A_GO-results.txt
-        ├───Kc167_P53_NT60_B_GO-results.txt
+        │   DmGOs-summary.txt
+        │   MammalGOs-summary.txt
+        │   Kc167_P53_NT60_A_GO-results.txt
+        │   Kc167_P53_NT60_B_GO-results.txt
+        │   Akdemir_p53_DOX_GO.txt
+        │   Akdemir_p53_RA_GO.txt
         │   ...
         │
 ```

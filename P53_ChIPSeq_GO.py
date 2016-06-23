@@ -19,9 +19,10 @@ HEADER = ['Term', 'P-value', 'Level_4_Traceback']
 
 BASE_DIR = os.path.dirname(os.getcwd())
 OBO_FILE = os.path.join(BASE_DIR, 'data/go-basic.obo')
-DMGOS_PATH = os.path.join(BASE_DIR, 'data/DmGOs')
+
+GO_FOLDERS = [os.path.join(BASE_DIR, 'data/GOs', f)
+              for f in ['DmGOs', 'MammalGOs']]
 OUTPUT_DIRECTORY = os.path.join(BASE_DIR, 'results/P53-ChIPSeq-GO-results')
-SUMMARY_FILE = os.path.join(OUTPUT_DIRECTORY, 'results_summary.txt')
 if not os.path.exists(OUTPUT_DIRECTORY):
     os.makedirs(OUTPUT_DIRECTORY)
 
@@ -147,7 +148,7 @@ def memory_usage_resource():
 
 def P53_ChIPSeq_GO():
     """
-        Go through each sample folder in the 'DmGOs' directory (DMGOS_PATH)
+        Go through each sample folder in 'DmGOs' and 'MammalGOs'
         and analyze the 'geneOntology.html' file.
     """
     log.info('Parsing %s for level checking', OBO_FILE)
@@ -155,41 +156,43 @@ def P53_ChIPSeq_GO():
 
     start = time.clock()
 
-    folders = next(os.walk(DMGOS_PATH))[1]
+    for go_folder in GO_FOLDERS:
+        sample_folders = next(os.walk(go_folder))[1]
 
-    summary_rows = [[] for i in range(TOP_RESULTS_CAP)]
+        summary_rows = [[] for i in range(TOP_RESULTS_CAP)]
 
-    for i, folder in enumerate(folders):
-        log.info('Searching in folder %i of %i: %s', i + 1, len(folders), folder)
-        with open(os.path.join(DMGOS_PATH, folder, 'geneOntology.html')) as go_file:
-            soup = BeautifulSoup(go_file, "html.parser")
-            rows = get_significant_rows(soup, p, ALPHA, level_cutoff=LEVEL)
-        rows = sorted(list(rows), key=lambda k: float(k['P-value']))[:TOP_RESULTS_CAP]
-        generate_parent_levels(rows)
+        for i, sample in enumerate(sample_folders):
+            log.info('Searching in sample %i of %i: %s', i + 1, len(sample_folders), sample)
+            with open(os.path.join(go_folder, sample, 'geneOntology.html')) as go_file:
+                soup = BeautifulSoup(go_file, "html.parser")
+                rows = get_significant_rows(soup, p, ALPHA, level_cutoff=LEVEL)
+            rows = sorted(list(rows), key=lambda k: float(k['P-value']))[:TOP_RESULTS_CAP]
+            generate_parent_levels(rows)
 
-        with open(os.path.join(OUTPUT_DIRECTORY, folder + '-results.txt'), 'w') as out_file:
-            filewriter = csv.writer(out_file, delimiter='\t')
-            log.info('Writing output file for %s (top %i significant terms)',
-                     folder, TOP_RESULTS_CAP)
-            filewriter.writerow(HEADER)
-            for i, row in enumerate(rows):
-                # make parent lists pretty
-                for col in HEADER:
-                    if col == 'Level_4_Traceback':
-                        row[col] = ', '.join(row[col])
-                filewriter.writerow([row[col] for col in HEADER])
-                summary_rows[i] += [row[col] for col in HEADER]
+            with open(os.path.join(OUTPUT_DIRECTORY, sample + '-results.txt'), 'w') as out_file:
+                filewriter = csv.writer(out_file, delimiter='\t')
+                log.info('Writing output file for %s (top %i significant terms)',
+                         sample, TOP_RESULTS_CAP)
+                filewriter.writerow(HEADER)
+                for i, row in enumerate(rows):
+                    # make parent lists pretty
+                    for col in HEADER:
+                        if col == 'Level_4_Traceback':
+                            row[col] = ', '.join(row[col])
+                    filewriter.writerow([row[col] for col in HEADER])
+                    summary_rows[i] += [row[col] for col in HEADER]
 
-    log.info("Writing summary file")
-    summary_header = []
-    for folder in folders:
-        summary_header += [folder + "_" + val for val in HEADER]
+        log.info("Writing summary file")
+        summary_header = []
+        for sample in sample_folders:
+            summary_header += [sample + "_" + val for val in HEADER]
 
-    with open(SUMMARY_FILE, 'w') as f:
-        filewriter = csv.writer(f, delimiter='\t')
-        filewriter.writerow(summary_header)
-        for row in summary_rows:
-            filewriter.writerow(row)
+        with open(os.path.join(OUTPUT_DIRECTORY, os.path.basename(go_folder) + '-summary.txt'), 'w') as f:
+            log.info(f)
+            filewriter = csv.writer(f, delimiter='\t')
+            filewriter.writerow(summary_header)
+            for row in summary_rows:
+                filewriter.writerow(row)
 
     end = time.clock()
     log.info('Run time was %4.2fs', end - start)
