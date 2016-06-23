@@ -2,4 +2,4 @@
 
 module load python
 source ve/bin/activate
-python Assignment2.py
+python P53_ChIPSeq_GO.py
