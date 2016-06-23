@@ -1,4 +1,27 @@
-# assignment-2
+# p53-chip-seq-go
+
+Generate GO results table/graphs for P53 genomics project
+
+run script: `./run.sh` (see "Building" section)
+
+## About
+
+The purpose of this assignment is to determine highly enriched GO terms
+
+Originally, terms were filtered to those which matched keywords such as 'cell death', 'apoptosis', and 'caspase'. However, filtering based on the keywords did not 
+
+## Data Source
+
+GO analysis files generated from Homer analysis of P53 ChIP-Seq files
+
+## Process
+
+For each folder in the DmGOs directory, there is a `geneOntology.html` file.
+
+For each `geneOntology.html` file, top 10 rows with lowest p-value are outputted to a results file with the term, p-value, and level 4 ancestor traceback. The level 4 ancestor traceback may contain multiple terms, including the original term if it is level 4. Level 4 is used because higher levels (0~3) are too generic.
+
+The level 4 traceback is based on the Gene Ontology data file from [http://geneontology.org/page/download-ontology]().
+
 
 ## Requirements
 
@@ -13,22 +36,22 @@ The following directory tree is assumed by `Assignment2.py`:
 
 ```
 Assignment2
-|
+│
 ├───assignment2 (this Git repository)
-|   │   Assignment2.py
-|   |   run.sh
-|   │   go-basic.obo
-|   │   ...
-|   |
-|
-|
+│   │   Assignment2.py
+│   │   run.sh
+│   │   go-basic.obo
+│   │   ...
+│   │
+│
+│
 └───DmGOs
     ├───Kc167_P53_NT60_A_GO
-    |   |   geneOntology.html
-    |   |   ...
-    |
+    │   │   geneOntology.html
+    │   │   ...
+    │
     ├───Kc167_P53_NT60_B_GO
-    |   ...
+    │   ...
 ```
 
 ## Setting up directories on HPC
