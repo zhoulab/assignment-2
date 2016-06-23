@@ -17,9 +17,10 @@ ALPHA = 1e-3
 TOP_RESULTS_CAP = 10
 HEADER = ['Term', 'P-value', 'Level_4_Traceback']
 
-OBO_FILE = 'go-basic.obo'
-OUTPUT_DIRECTORY = os.path.join(os.path.dirname(os.getcwd()), 'results (condensed)')
-DMGOS_PATH = os.path.join(os.path.dirname(os.getcwd()), 'DmGOs')
+BASE_DIR = os.path.dirname(os.getcwd())
+OBO_FILE = os.path.join(BASE_DIR, 'data/go-basic.obo')
+OUTPUT_DIRECTORY = os.path.join(BASE_DIR, 'results/P53-ChIPSeq-GO-results')
+DMGOS_PATH = os.path.join(BASE_DIR, 'data/DmGOs')
 
 SUMMARY_FILE = os.path.join(OUTPUT_DIRECTORY, 'results_summary.txt')
 
@@ -143,10 +144,10 @@ def memory_usage_resource():
     return mem
 
 
-def assignment2():
+def P53_ChIPSeq_GO():
     """
-        Goes through each folder in the 'DmGOs' directory (DMGOS_PATH)
-        and analyzes the 'geneOntology.html' file.
+        Go through each sample folder in the 'DmGOs' directory (DMGOS_PATH)
+        and analyze the 'geneOntology.html' file.
     """
     log.info('Parsing %s for level checking', OBO_FILE)
     p = obo_parser.GODag(OBO_FILE)
@@ -203,4 +204,4 @@ if __name__ == "__main__":
     if not os.path.exists(OUTPUT_DIRECTORY):
         os.makedirs(OUTPUT_DIRECTORY)
 
-    assignment2()
+    P53_ChIPSeq_GO()
