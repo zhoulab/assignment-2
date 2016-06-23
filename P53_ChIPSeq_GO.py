@@ -19,10 +19,11 @@ HEADER = ['Term', 'P-value', 'Level_4_Traceback']
 
 BASE_DIR = os.path.dirname(os.getcwd())
 OBO_FILE = os.path.join(BASE_DIR, 'data/go-basic.obo')
-OUTPUT_DIRECTORY = os.path.join(BASE_DIR, 'results/P53-ChIPSeq-GO-results')
 DMGOS_PATH = os.path.join(BASE_DIR, 'data/DmGOs')
-
+OUTPUT_DIRECTORY = os.path.join(BASE_DIR, 'results/P53-ChIPSeq-GO-results')
 SUMMARY_FILE = os.path.join(OUTPUT_DIRECTORY, 'results_summary.txt')
+if not os.path.exists(OUTPUT_DIRECTORY):
+    os.makedirs(OUTPUT_DIRECTORY)
 
 
 def get_rows(soup):
