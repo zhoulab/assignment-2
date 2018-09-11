@@ -152,7 +152,7 @@ def P53_ChIPSeq_GO():
         and analyze the 'geneOntology.html' file.
     """
     log.info('Parsing %s for level checking', OBO_FILE)
-    p = obo_parser.GODag(OBO_FILE)
+    p = obo_parser.GODag(OBO_FILE, load_obsolete=True)
 
     start = time.clock()
 
