@@ -4,9 +4,6 @@ module load python
 virtualenv ve
 . ve/bin/activate
 
-for line in $(cat requirements.txt)
-do
-  pip install $line
-done
+pip install -r requirements.txt
 
-wget http://geneontology.org/ontology/go-basic.obo
+wget http://geneontology.org/ontology/go-basic.obo -O ../data/
