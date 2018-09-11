@@ -6,4 +6,4 @@ virtualenv ve
 
 pip install -r requirements.txt
 
-wget http://geneontology.org/ontology/go-basic.obo -O ../data/
+wget http://geneontology.org/ontology/go-basic.obo -O ../data/go-basic.obo
